@@ -9,5 +9,8 @@
   "dependencies": {
     "ts-node": "^8.10.1",
     "typescript": "^3.9.2"
+  },
+  "devDependencies": {
+    "eslint": "^7.0.0"
   }
 }
