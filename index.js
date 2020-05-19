@@ -29,7 +29,7 @@ const nestedTreeMock = [
 
 
 const groupedActions = {
-  "1": new Array(7).map(item => {}),
+  "1": new Array(7).map(item => { }),
   "1.1.1": [{}, {}, {}],
   "2.1": [{}, {}, {}],
   "2.2": [{}, {}]
@@ -74,6 +74,53 @@ const getGlobalIndicesImperative = (treeArr, actionGroup) => {
 
   treeArr.forEach(entry => getCountsForAllChildren(entry));
   return globalIndices;
+}
+
+const getIndicesFunctional = (treeArr, actionGroup) => {
+  const getCountsForAllChildren = (entry) => {
+    const { children, id: rootId } = entry;
+
+    const allChildIndices = children.reduce((accumulator, currentChild) => {
+      if (!currentChild.children || !currentChild.children.length) {
+        const totalForCurrentEntry = getTaskAmountForId(currentChild.id, actionGroup);
+        return {
+          total: accumulator.total + totalForCurrentEntry,
+          indices: {
+            ...accumulator.indices,
+            [currentChild.id]: totalForCurrentEntry
+          }
+        };
+      }
+      const childCounts = getCountsForAllChildren(currentChild);
+      return {
+        total: accumulator.total + childCounts.total,
+        indices: {
+          ...childCounts.indices,
+          [currentChild.id]: childCounts.total + getTaskAmountForId(currentChild.id, actionGroup), // if tasks at all levels
+        }
+      };
+    }, {
+      total: 0,
+      indices: {},
+    });
+
+    return {
+      total: allChildIndices.total,
+      indices: {
+        ...allChildIndices.indices,
+        [rootId]: allChildIndices.total + getTaskAmountForId(rootId, actionGroup),
+      }
+    }
+  }
+
+  const result = treeArr.reduce((acc, currentEntry) => {
+    const { indices, total } = getCountsForAllChildren(currentEntry);
+    return {
+      ...indices,
+      ...acc,
+    }
+  }, {});
+  return result;
 }
 
 const results = getGlobalIndicesImperative(nestedTreeMock, groupedActions);
